@@ -10,6 +10,8 @@ import android.os.Bundle;
 import android.support.v7.graphics.Palette;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 
@@ -64,8 +66,19 @@ public class AlbumDetailActivity extends Activity {
         // so that the bottoms expand, must use ObjectAnimator class
         ObjectAnimator animatorTitle = ObjectAnimator.ofInt(titlePanel, "bottom",
                 titleStartValue, titleEndValue);
+        // the interpolator controls whether the animation happens at a constant speed or
+        // accelerates/decelerates. we will make the top one accelerate moving toward the bottom
+        // one and make the bottom one decelerate, so we accelerate in and decelerate out
+        animatorTitle.setInterpolator(new AccelerateInterpolator());
+
         ObjectAnimator animatorTrack = ObjectAnimator.ofInt(trackPanel, "bottom",
                 trackStartValue, trackEndValue);
+        animatorTrack.setInterpolator(new DecelerateInterpolator());
+
+        /*animatorTitle.setDuration(1000);
+        animatorTrack.setDuration(1000);
+        // animation will start 1s after album cover is clicked
+        animatorTitle.setStartDelay(1000);*/
 
         AnimatorSet set = new AnimatorSet();
         // plays the animations for the ViewGroup titlePanel, then ViewGroup trackPanel, then fab

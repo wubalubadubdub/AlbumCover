@@ -1,5 +1,7 @@
 package com.teamtreehouse.albumcover;
 
+import android.animation.Animator;
+import android.animation.AnimatorInflater;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.app.Activity;
@@ -40,13 +42,16 @@ public class AlbumDetailActivity extends Activity {
 
     private void animate() {
 
-        ObjectAnimator animatorFabX = ObjectAnimator.ofFloat(fab, "scaleX", 0, 1);
-        ObjectAnimator animatorFabY = ObjectAnimator.ofFloat(fab, "scaleY", 0, 1);
+//        ObjectAnimator animatorFabX = ObjectAnimator.ofFloat(fab, "scaleX", 0, 1);
+//        ObjectAnimator animatorFabY = ObjectAnimator.ofFloat(fab, "scaleY", 0, 1);
 
-        AnimatorSet scaleFab = new AnimatorSet();
+//        AnimatorSet scaleFab = new AnimatorSet();
         // no start method called on below, since it'll get played sequentially after
         // the first two animations in the set.playSequentially(..) method below.
-        scaleFab.playTogether(animatorFabX, animatorFabY);
+//        scaleFab.playTogether(animatorFabX, animatorFabY);
+
+        Animator scaleFab = AnimatorInflater.loadAnimator(this, R.animator.scale);
+        scaleFab.setTarget(fab);
 
 
         // two below methods return the pixel value for the top and bottom of titlePanel

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- set tag is equivalent to AnimatorSet we used before in java code. Note
+that we cannot animate title and track ViewGroups in XML as we did in java, since
+those rely on values (the pixel positions on the screen) that are only available at runtime.
+we cannot use XML for runtime values. -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:ordering="together">
+
+    <objectAnimator android:propertyName="scaleX" android:valueFrom="0"
+    android:valueTo="1" android:duration="150"/>
+
+    <objectAnimator android:propertyName="scaleY" android:valueFrom="0"
+                    android:valueTo="1" android:duration="150"/>
+
+</set>

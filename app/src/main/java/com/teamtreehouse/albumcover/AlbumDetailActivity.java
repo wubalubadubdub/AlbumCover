@@ -1,5 +1,7 @@
 package com.teamtreehouse.albumcover;
 
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
@@ -35,9 +37,40 @@ public class AlbumDetailActivity extends Activity {
     }
 
     private void animate() {
+
+        ObjectAnimator animatorFabX = ObjectAnimator.ofFloat(fab, "scaleX", 0, 1);
+        ObjectAnimator animatorFabY = ObjectAnimator.ofFloat(fab, "scaleY", 0, 1);
+
+        AnimatorSet scaleFab = new AnimatorSet();
+        // no start method called on below, since it'll get played sequentially after
+        // the first two animations in the set.playSequentially(..) method below.
+        scaleFab.playTogether(animatorFabX, animatorFabY);
+
+
+        // two below methods return the pixel value for the top and bottom of titlePanel
+        int titleStartValue = titlePanel.getTop();
+        int titleEndValue = titlePanel.getBottom();
+
+        int trackStartValue = trackPanel.getTop();
+        int trackEndValue = trackPanel.getBottom();
+
+        // hide both panels and fab initially so we don't get flickering during animations
+        titlePanel.setBottom(titleStartValue);
+        trackPanel.setBottom(titleStartValue);
         fab.setScaleX(0);
         fab.setScaleY(0);
-        fab.animate().scaleX(1).scaleY(1).start();
+
+        // not all functionality is available through animate call. to animate TextViews
+        // so that the bottoms expand, must use ObjectAnimator class
+        ObjectAnimator animatorTitle = ObjectAnimator.ofInt(titlePanel, "bottom",
+                titleStartValue, titleEndValue);
+        ObjectAnimator animatorTrack = ObjectAnimator.ofInt(trackPanel, "bottom",
+                trackStartValue, trackEndValue);
+
+        AnimatorSet set = new AnimatorSet();
+        // plays the animations for the ViewGroup titlePanel, then ViewGroup trackPanel, then fab
+        set.playSequentially(animatorTitle, animatorTrack, scaleFab);
+        set.start();
     }
 
     @OnClick(R.id.album_art)

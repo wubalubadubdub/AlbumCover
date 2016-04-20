@@ -1,9 +1,5 @@
 package com.teamtreehouse.albumcover;
 
-import android.animation.Animator;
-import android.animation.AnimatorInflater;
-import android.animation.AnimatorSet;
-import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
@@ -13,14 +9,16 @@ import android.support.v7.graphics.Palette;
 import android.transition.ChangeBounds;
 import android.transition.Fade;
 import android.transition.Scene;
+import android.transition.Transition;
 import android.transition.TransitionManager;
 import android.transition.TransitionSet;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AccelerateInterpolator;
-import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+
+import com.teamtreehouse.albumcover.transition.Fold;
+import com.teamtreehouse.albumcover.transition.Scale;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -51,53 +49,48 @@ public class AlbumDetailActivity extends Activity {
         setupTransitions();
     }
 
-    private void animate() {
+    // we replaced the animate() method with a custom transition
+    // we'll create a set of transitions and use this to run it
+    private Transition createTransition() {
+        TransitionSet set = new TransitionSet();
+        set.setOrdering(TransitionSet.ORDERING_SEQUENTIAL);
 
-        Animator scaleFab = AnimatorInflater.loadAnimator(this, R.animator.scale);
-        scaleFab.setTarget(fab);
+        // create transition for the fab
+        Transition tFab = new Scale();
+        tFab.setDuration(150);
+        tFab.addTarget(fab);
 
+        // ..and for title group
+        Transition tTitle = new Fold();
+        tTitle.setDuration(150);
+        tTitle.addTarget(titlePanel);
 
-        // two below methods return the pixel value for the top and bottom of titlePanel
-        int titleStartValue = titlePanel.getTop();
-        int titleEndValue = titlePanel.getBottom();
+        //..and for track group
+        Transition tTrack = new Fold();
+        tTrack.setDuration(150);
+        tTrack.addTarget(trackPanel);
 
-        int trackStartValue = trackPanel.getTop();
-        int trackEndValue = trackPanel.getBottom();
+        // add transitions to set in order you want them to run
+        set.addTransition(tTrack);
+        set.addTransition(tTitle);
+        set.addTransition(tFab);
 
-        // hide both panels and fab initially so we don't get flickering during animations
-        titlePanel.setBottom(titleStartValue);
-        trackPanel.setBottom(titleStartValue);
-        fab.setScaleX(0);
-        fab.setScaleY(0);
-
-        // not all functionality is available through animate call. to animate TextViews
-        // so that the bottoms expand, must use ObjectAnimator class
-        ObjectAnimator animatorTitle = ObjectAnimator.ofInt(titlePanel, "bottom",
-                titleStartValue, titleEndValue);
-        // the interpolator controls whether the animation happens at a constant speed or
-        // accelerates/decelerates. we will make the top one accelerate moving toward the bottom
-        // one and make the bottom one decelerate, so we accelerate in and decelerate out
-        animatorTitle.setInterpolator(new AccelerateInterpolator());
-
-        ObjectAnimator animatorTrack = ObjectAnimator.ofInt(trackPanel, "bottom",
-                trackStartValue, trackEndValue);
-        animatorTrack.setInterpolator(new DecelerateInterpolator());
-
-        /*animatorTitle.setDuration(1000);
-        animatorTrack.setDuration(1000);
-        // animation will start 1s after album cover is clicked
-        animatorTitle.setStartDelay(1000);*/
-
-        AnimatorSet set = new AnimatorSet();
-        // plays the animations for the ViewGroup titlePanel, then ViewGroup trackPanel, then fab
-        set.playSequentially(animatorTitle, animatorTrack, scaleFab);
-        set.start();
+        return set;
     }
+
+
 
     @OnClick(R.id.album_art)
     public void onAlbumArtClick(View view) {
-        animate();
+        Transition transition = createTransition();
+        // after method below, changes to detailContainer are being tracked
+        TransitionManager.beginDelayedTransition(detailContainer, transition);
 
+        // my own code, to set all three views to invisible
+        View[] detailContainerViews = new View[] {fab, titlePanel, trackPanel};
+        for(View v : detailContainerViews) {
+            v.setVisibility(View.INVISIBLE);
+        }
     }
 
     @OnClick(R.id.track_panel)

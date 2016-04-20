@@ -37,12 +37,18 @@ public class AlbumDetailActivity extends Activity {
     @Bind(R.id.track_panel) ViewGroup trackPanel;
     @Bind(R.id.detail_container) ViewGroup detailContainer;
 
+    private TransitionManager mTransitionManager;
+    private Scene mExpandedScene;
+    private Scene mCollapsedScene;
+    private Scene mCurrentScene; // tracks which scene we're in
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_album_detail);
         ButterKnife.bind(this);
         populate();
+        setupTransitions();
     }
 
     private void animate() {
@@ -96,48 +102,90 @@ public class AlbumDetailActivity extends Activity {
 
     @OnClick(R.id.track_panel)
     public void onTrackPanelClicked(View view) {
+        if (mCurrentScene == mExpandedScene) {
+            mCurrentScene = mCollapsedScene;
+        } else {
+            mCurrentScene = mExpandedScene;
+        }
+        mTransitionManager.transitionTo(mCurrentScene);
+    }
+
+    private void setupTransitions() {
         // define root of View hierarchy where we want transition to happen
         // contains everything that needs to be animated
         ViewGroup transitionRoot = detailContainer;
+        mTransitionManager = new TransitionManager();
 
-        Scene expandedScene = Scene.getSceneForLayout(transitionRoot,
-                R.layout.activity_album_detail_expanded, view.getContext());
+        // expanded scene
+        mExpandedScene = Scene.getSceneForLayout(transitionRoot,
+                R.layout.activity_album_detail_expanded, this);
         // we want to reset the album image and other fields to the specific ones
         // for each item in the grid instead of using the default "Mean Something" one
         // as defined in the XML
-        expandedScene.setEnterAction(new Runnable() {
+        mExpandedScene.setEnterAction(new Runnable() {
             @Override
             public void run() {
                 // since some Views are recreated, corresponding fields bound by
                 // ButterKnife no longer refer to Views on screen. we must call bind again.
                 ButterKnife.bind(AlbumDetailActivity.this);
                 populate();
+                mCurrentScene = mExpandedScene;
             }
         });
-        TransitionSet transitionSet = new TransitionSet();
+        TransitionSet expandTransitionSet = new TransitionSet();
 
         // set the ordering so that lyrics fade in comes after ChangeBounds transition.
         // orders them based on what order they were added to the TransitionSet. in our
         // case, that's ChangeBounds followed by Fade
-        transitionSet.setOrdering(TransitionSet.ORDERING_SEQUENTIAL);
+        expandTransitionSet.setOrdering(TransitionSet.ORDERING_SEQUENTIAL);
 
         // create 1st transition that happens with the ViewGroups other than the TextView
         // that contains the lyrics
         ChangeBounds changeBounds = new ChangeBounds();
         changeBounds.setDuration(200);
 
-        transitionSet.addTransition(changeBounds);
+        expandTransitionSet.addTransition(changeBounds);
 
         // Fade is a type of transition that we'll use to fade the lyrics in
         Fade fadeLyrics = new Fade();
         fadeLyrics.addTarget(R.id.lyrics);
         fadeLyrics.setDuration(150);
 
-        transitionSet.addTransition(fadeLyrics);
+        expandTransitionSet.addTransition(fadeLyrics);
 
-        // execute set of Transitions
-        TransitionManager.go(expandedScene, transitionSet);
+        // collapsed scene
+        mCollapsedScene = Scene.getSceneForLayout(transitionRoot,
+                R.layout.activity_album_detail, this);
 
+        mCollapsedScene.setEnterAction(new Runnable() {
+            @Override
+            public void run() {
+                // since some Views are recreated, corresponding fields bound by
+                // ButterKnife no longer refer to Views on screen. we must call bind again.
+                ButterKnife.bind(AlbumDetailActivity.this);
+                populate();
+                mCurrentScene = mCollapsedScene;
+            }
+        });
+        TransitionSet collapseTransitionSet = new TransitionSet();
+        collapseTransitionSet.setOrdering(TransitionSet.ORDERING_SEQUENTIAL);
+
+        // Fade is a type of transition that we'll use to fade the lyrics in
+        Fade fadeOutLyrics = new Fade();
+        fadeOutLyrics.addTarget(R.id.lyrics);
+        fadeOutLyrics.setDuration(150);
+        collapseTransitionSet.addTransition(fadeOutLyrics);
+
+        ChangeBounds resetBounds = new ChangeBounds();
+        resetBounds.setDuration(200);
+        collapseTransitionSet.addTransition(resetBounds);
+
+        mTransitionManager.setTransition(mExpandedScene, mCollapsedScene,
+                collapseTransitionSet);
+        mTransitionManager.setTransition(mCollapsedScene, mExpandedScene,
+                expandTransitionSet);
+        // must enter starting scene before 1st transition
+        mCollapsedScene.enter();
     }
 
     private void populate() {

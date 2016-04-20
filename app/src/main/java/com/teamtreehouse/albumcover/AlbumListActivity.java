@@ -3,6 +3,7 @@ package com.teamtreehouse.albumcover;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.view.View;
@@ -21,18 +22,17 @@ public class AlbumListActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_album_list);
-        initTransitions();
+        setupTransitions();
 
         ButterKnife.bind(this);
         populate();
     }
 
-    private void initTransitions() {
-        getWindow().setExitTransition(null);
-        getWindow().setReenterTransition(null);
+    private void setupTransitions() {
+       // getWindow().setExitTransition(new Explode());
     }
 
-    interface OnVHClickedListener {
+    interface OnVHClickedListener { // ???
         void onVHClicked(AlbumVH vh);
     }
 
@@ -50,7 +50,7 @@ public class AlbumListActivity extends Activity {
 
         @Override
         public void onClick(View v) {
-            mListener.onVHClicked(this);
+            mListener.onVHClicked(this); // ???
         }
     }
 
@@ -72,6 +72,7 @@ public class AlbumListActivity extends Activity {
             @Override
             public AlbumVH onCreateViewHolder(ViewGroup parent, int viewType) {
                 View albumView = getLayoutInflater().inflate(R.layout.album_grid_item, parent, false);
+                // anon inner class passed as 2nd parameter in constructor of AlbumVH
                 return new AlbumVH(albumView, new OnVHClickedListener() {
                     @Override
                     public void onVHClicked(AlbumVH vh) {
@@ -79,7 +80,14 @@ public class AlbumListActivity extends Activity {
                         Intent intent = new Intent(AlbumListActivity.this, AlbumDetailActivity.class);
                         intent.putExtra(AlbumDetailActivity.EXTRA_ALBUM_ART_RESID, albumArtResId);
 
-                        startActivity(intent);
+                        // code below is used to animate transitions between activities
+                        // default animation for transition between activities is fade
+                        // pass in vh.albumArt to get ID from ViewHolder and the string from
+                        // the transitionName attribute set in XML, which is albumArt
+                        ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(
+                                AlbumListActivity.this, vh.albumArt, "albumArt"
+                        );
+                        startActivity(intent, options.toBundle());
                     }
                 });
             }
